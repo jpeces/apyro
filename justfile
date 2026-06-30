@@ -67,7 +67,7 @@ sync:
 # Remove temporary files
 [group('lifecycle')]
 clean:
-    rm -rf .venv .pytest_cache .mypy_cache .ruff_cache .coverage htmlcov
+    rm -rf .venv .pytest_cache .mypy_cache .ruff_cache .coverage htmlcov .profiling
     find . -type d -name "__pycache__" -exec rm -r {} +
 
 # Recreate project virtualenv from nothing
