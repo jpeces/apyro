@@ -1,0 +1,30 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+
+
+# Distribution / packaging
+build/
+dist/
+sdist/
+wheels/
+*.egg-info/
+uv.lock
+.python-version
+
+# Caches
+.pytest_cache/
+.ruff_cache
+.profiling
+
+# Test outputs
+htmlcov/
+.coverage
+
+# Virtual environments
+.venv
+
+# Agents
+.opencode/
+.agents
+skills-lock.json
