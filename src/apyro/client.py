@@ -26,6 +26,14 @@ class ApiClient:
         headers: dict[str, str] | None = None,
         configuration: ApiClientConfig | None = None,
     ) -> None:
+        """Initialize the `ApiClient`.
+
+        Args:
+            base_url: Base URL prepended to every endpoint path.
+            headers: Default headers applied to every request.
+            configuration: Client-level configuration (timeouts, retries, auth, ...).
+                Defaults to `ApiClientConfig()`.
+        """
         self.base_url = base_url
         self.headers = headers or {}
         self.configuration = configuration or ApiClientConfig()
@@ -33,6 +41,7 @@ class ApiClient:
         self._async_client: httpx.AsyncClient | None = None
 
     def _resolve_auth(self) -> Any:
+        """Resolve the auth callable/tuple from `ApiClientConfig`."""
         cfg = self.configuration
         if cfg.username is not None and cfg.password is not None:
             return (cfg.username, cfg.password)
@@ -41,6 +50,7 @@ class ApiClient:
         return None
 
     def _build_transport(self) -> Any:
+        """Wrap `ApiClientConfig.transport` with a `RetryTransport` when retries are enabled."""
         from httpx_retries import Retry, RetryTransport
 
         cfg = self.configuration
@@ -54,6 +64,7 @@ class ApiClient:
         return cfg.transport
 
     def _build_event_hooks(self, *, async_: bool) -> dict[str, list[Any]] | None:
+        """Adapt `ApiClientConfig.event_hooks` for the target httpx client (sync or async)."""
         raw = self.configuration.event_hooks
         if raw is None:
             return None
@@ -131,7 +142,24 @@ class ApiClient:
         body: Any = None,
         headers: dict[str, str] | None = None,
     ) -> ApiResponse[T]:
-        """Send a request for the given endpoint synchronously."""
+        """Send a request for the given endpoint synchronously.
+
+        Args:
+            endpoint: The endpoint descriptor to invoke.
+            path_params: Values for the endpoint's path template placeholders.
+                Validated against `Endpoint.path_params_model` when set.
+            query_params: Query string values. Validated against
+                `Endpoint.query_params_model` when set.
+            body: Request body. Coerced via `Endpoint.request_body_model` when set.
+            headers: Per-request headers; merged on top of the client defaults.
+
+        Returns:
+            The parsed `ApiResponse` for the endpoint.
+
+        Raises:
+            ApiTransportError: When the underlying httpx transport fails
+                (timeout, connection error, etc.).
+        """
         import httpx
 
         client = self.get_client()
@@ -164,7 +192,24 @@ class ApiClient:
         body: Any = None,
         headers: dict[str, str] | None = None,
     ) -> ApiResponse[T]:
-        """Send a request for the given endpoint asynchronously."""
+        """Send a request for the given endpoint asynchronously.
+
+        Args:
+            endpoint: The endpoint descriptor to invoke.
+            path_params: Values for the endpoint's path template placeholders.
+                Validated against `Endpoint.path_params_model` when set.
+            query_params: Query string values. Validated against
+                `Endpoint.query_params_model` when set.
+            body: Request body. Coerced via `Endpoint.request_body_model` when set.
+            headers: Per-request headers; merged on top of the client defaults.
+
+        Returns:
+            The parsed `ApiResponse` for the endpoint.
+
+        Raises:
+            ApiTransportError: When the underlying httpx transport fails
+                (timeout, connection error, etc.).
+        """
         import httpx
 
         client = self.get_async_client()

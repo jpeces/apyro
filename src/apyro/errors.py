@@ -24,6 +24,14 @@ class ApiResponseError(ApiError):
     def __init__(
         self, status_code: int, error_model: BaseModel | None, raw: httpx.Response
     ) -> None:
+        """Initialize the `ApiResponseError`.
+
+        Args:
+            status_code: The HTTP status code that triggered the error.
+            error_model: The parsed error body (using the model registered in
+                `Endpoint.errors` for this status), or `None` if parsing failed.
+            raw: The original `httpx.Response` for further inspection.
+        """
         self.status_code = status_code
         self.error_model = error_model
         self.raw = raw
@@ -38,6 +46,12 @@ class UnexpectedStatus(ApiError):
     """
 
     def __init__(self, status_code: int, content: bytes) -> None:
+        """Initialize the `UnexpectedStatus`.
+
+        Args:
+            status_code: The undocumented HTTP status code returned by the server.
+            content: The raw response body for diagnostic purposes.
+        """
         self.status_code = status_code
         self.content = content
         super().__init__(

@@ -18,6 +18,8 @@ T = TypeVar("T")
 
 
 class HttpMethod(StrEnum):
+    """HTTP verbs supported by `Endpoint`."""
+
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
@@ -56,7 +58,22 @@ class Endpoint(Generic[T]):
         body: Any = None,
         headers: dict[str, str] | None = None,
     ) -> httpx.Request:
-        """Render this endpoint into an ``httpx.Request`` via ``client``."""
+        """Render this endpoint into an `httpx.Request` via `client`.
+
+        Args:
+            client: The httpx client used to build the request (provides
+                `base_url` and shared state).
+            path_params: Values for `path` placeholders. Validated against
+                `path_params_model` when set.
+            query_params: Query string values. Validated against
+                `query_params_model` when set; `None` values are dropped.
+            body: Request body. Coerced via `request_body_model` when set,
+                otherwise forwarded as-is.
+            headers: Per-request headers, merged on top of the client defaults.
+
+        Returns:
+            The fully rendered `httpx.Request` ready to be sent.
+        """
         path_params = path_params or {}
         if self.path_params_model is not None:
             path_params = self.path_params_model(**path_params).model_dump(mode="json")

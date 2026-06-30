@@ -1,3 +1,5 @@
+"""Declarative, pydantic-driven HTTP API client built on httpx."""
+
 from importlib.metadata import version as _version
 
 from apyro.client import ApiClient
