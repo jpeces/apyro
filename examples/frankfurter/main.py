@@ -105,7 +105,7 @@ def demo_sync() -> None:
     print("=" * 60)
 
     with _make_client() as client:
-        # 1. Latest rates — typed list response
+        # 1. Latest rates, typed list response
         r = get_rates(client)
         print(f"\n1. GET /rates → {r.status_code}")
         if r.parsed is not None:
@@ -114,7 +114,7 @@ def demo_sync() -> None:
             )
         print(f"   raw:    {r.raw.text[:80]}...")
 
-        # 1b. Rates with query params — from_ alias, dates, enums
+        # 1b. Rates with query params: from_ alias, dates, enums
         r = get_rates(
             client,
             from_=date(2024, 1, 1),
@@ -128,7 +128,7 @@ def demo_sync() -> None:
         print(f"   rendered URL: {str(r.raw.url).replace(BASE_URL, '')}")
         print(f"   query keys: {sorted(r.raw.url.params.keys())}")
 
-        # 2. Single rate pair — path params
+        # 2. Single rate pair, path params
         r = get_rate(client, "EUR", "USD")
         print(f"\n2. GET /rate/EUR/USD → {r.status_code}")
         print(f"   parsed: {r.parsed}")
@@ -157,7 +157,7 @@ def demo_sync() -> None:
         if r.parsed is not None:
             print(f"   parsed: {r.parsed[0].name}")
 
-        # 6. Documented error — 404 with parsed error model
+        # 6. Documented error, 404 with parsed error model
         print("\n6. GET /currency/XXX → expecting documented 404...")
         try:
             get_currency(client, "XXX")
@@ -166,7 +166,7 @@ def demo_sync() -> None:
             print(f"   error_model: {e.error_model}")
             print(f"   raw status: {e.raw.status_code}")
 
-    # 7. Undocumented error — 500 raises UnexpectedStatus
+    # 7. Undocumented error, 500 raises UnexpectedStatus
     print("\n7. GET /providers (500) → expecting UnexpectedStatus...")
     bad_client = ApiClient(
         BASE_URL,
@@ -182,7 +182,7 @@ def demo_sync() -> None:
         print(f"   caught UnexpectedStatus: status={e.status_code}")
         print(f"   content: {e.content.decode()[:60]}...")
 
-    # 8. Suppressed unexpected status — returns parsed=None
+    # 8. Suppressed unexpected status, returns parsed=None
     print("\n8. GET /providers (500) with suppress_unexpected_status=True...")
     suppressed = ApiClient(
         BASE_URL,

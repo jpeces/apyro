@@ -73,7 +73,7 @@ class ApiClient:
         # ponytail: httpx AsyncClient awaits hooks (wants coroutines) while
         # Client calls them directly. Wrap sync hooks so one config works on
         # both paths; async hooks pass through unchanged. Key names are
-        # identical across both clients — no fan-out needed.
+        # identical across both clients, no fan-out needed.
         import inspect
 
         def _wrap(hook: Any) -> Any:
@@ -235,7 +235,7 @@ class ApiClient:
         try:
             raw = await client.send(req)
         except httpx.TransportError as exc:
-            # ponytail: see sync request() above — same deferral applies here.
+            # ponytail: see sync request() above; same deferral applies here.
             raise ApiTransportError(str(exc)) from exc
         return endpoint.parse_response(
             raw,

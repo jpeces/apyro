@@ -136,7 +136,7 @@ class Rate(BaseModel):
             "Per-provider rates for this pair. Present only when `expand=providers` "
             "is set. Each entry has the provider's published rate "
             "(rebased to the row's base). Entries with `excluded: true` did not "
-            "contribute to the blended `rate` — either flagged as outliers by the "
+            "contribute to the blended `rate`, either flagged as outliers by the "
             "consensus filter, or overridden by a currency peg. Omitted on synthesized "
             "peg rows where no provider published the quote."
         ),
