@@ -8,6 +8,7 @@ from apyro.endpoint import Endpoint, HttpMethod
 from apyro.errors import (
     ApiError,
     ApiResponseError,
+    ApiResponseErrorParse,
     ApiTransportError,
     UnexpectedStatus,
 )
@@ -20,6 +21,7 @@ __all__ = [
     "ApiClientConfig",
     "ApiResponse",
     "ApiResponseError",
+    "ApiResponseErrorParse",
     "ApiError",
     "ApiTransportError",
     "Endpoint",

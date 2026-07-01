@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from pydantic import BaseModel, TypeAdapter
 
-from apyro.errors import ApiResponseError, UnexpectedStatus
+from apyro.errors import ApiResponseError, ApiResponseErrorParse, UnexpectedStatus
 from apyro.response import ApiResponse
 
 if TYPE_CHECKING:
@@ -111,22 +111,24 @@ class Endpoint(Generic[T]):
         *,
         suppress_unexpected_status: bool = False,
     ) -> ApiResponse[T]:
-        """Parse an ``httpx.Response`` against this endpoint's models.
+        """Parse an `httpx.Response` against this endpoint's models.
 
-        Raises :class:`ApiResponseError` for documented error statuses (always),
-        and :class:`UnexpectedStatus` for undocumented 4xx/5xx unless
-        ``suppress_unexpected_status`` is set, in which case an
-        :class:`ApiResponse` with ``parsed=None`` is returned.
+        Raises `ApiResponseError` when a documented error status is returned
+        and the body parses against the registered model. Raises
+        `ApiResponseErrorParse` when the body fails to parse against either
+        the registered error model (error path) or `response_model`
+        (success path). Raises `UnexpectedStatus` for undocumented 4xx/5xx
+        unless `suppress_unexpected_status` is set, in which case an
+        `ApiResponse` with `parsed=None` is returned.
         """
         status = raw.status_code
 
         if status in self.errors:
-            error_model = None
             error_cls = self.errors[status]
             try:
                 error_model = error_cls(**raw.json())
-            except Exception:
-                error_model = None
+            except Exception as exc:
+                raise ApiResponseErrorParse(status, raw.content, raw) from exc
             raise ApiResponseError(status, error_model, raw)
 
         if status >= 400:
@@ -143,8 +145,11 @@ class Endpoint(Generic[T]):
         if self.response_handler is not None:
             data = self.response_handler(raw)
         else:
-            adapter = TypeAdapter(self.response_model)
-            data = adapter.validate_python(raw.json())
+            try:
+                adapter = TypeAdapter(self.response_model)
+                data = adapter.validate_python(raw.json())
+            except Exception as exc:
+                raise ApiResponseErrorParse(status, raw.content, raw) from exc
 
         return ApiResponse(
             status_code=HTTPStatus(status),

@@ -4,9 +4,15 @@ from decimal import Decimal
 import httpx
 import pytest
 
-from apyro import ApiResponseError, Endpoint, HttpMethod, UnexpectedStatus
+from apyro import (
+    ApiResponseError,
+    ApiResponseErrorParse,
+    Endpoint,
+    HttpMethod,
+    UnexpectedStatus,
+)
 
-from _mocks import CREATE_ITEM, ErrorBody, GET_ITEM, GET_ITEMS
+from _mocks import CREATE_ITEM, ErrorBody, GET_ITEM, GET_ITEMS, ItemDetail
 
 
 def test_build_request_renders_path() -> None:
@@ -84,8 +90,24 @@ def test_parse_response_documented_error_malformed_body() -> None:
         errors={500: ErrorBody},
     )
     raw = httpx.Response(500, json={"unexpected": "shape"})
-    with pytest.raises(ApiResponseError) as exc:
+    with pytest.raises(ApiResponseErrorParse) as exc:
         ep.parse_response(raw)
     assert exc.value.status_code == 500
-    assert exc.value.error_model is None
+    assert exc.value.body == raw.content
     assert exc.value.raw is raw
+    assert isinstance(exc.value.__cause__, Exception)
+
+
+def test_parse_response_success_malformed_body() -> None:
+    ep = Endpoint(
+        method=HttpMethod.GET,
+        path="/things",
+        response_model=ItemDetail,
+    )
+    raw = httpx.Response(200, json={"unexpected": "shape"})
+    with pytest.raises(ApiResponseErrorParse) as exc:
+        ep.parse_response(raw)
+    assert exc.value.status_code == 200
+    assert exc.value.body == raw.content
+    assert exc.value.raw is raw
+    assert isinstance(exc.value.__cause__, Exception)

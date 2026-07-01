@@ -17,25 +17,56 @@ class ApiTransportError(ApiError):
 class ApiResponseError(ApiError):
     """Raised when the response has a documented error status code.
 
-    Carries the parsed error model (when the endpoint registers one for the
-    status code) and the raw httpx response.
+    Carries the parsed error model (the model registered in
+    `Endpoint.errors` for the status) and the raw httpx response.
     """
 
     def __init__(
-        self, status_code: int, error_model: BaseModel | None, raw: httpx.Response
+        self, status_code: int, error_model: BaseModel, raw: httpx.Response
     ) -> None:
         """Initialize the `ApiResponseError`.
 
         Args:
             status_code: The HTTP status code that triggered the error.
-            error_model: The parsed error body (using the model registered in
-                `Endpoint.errors` for this status), or `None` if parsing failed.
+            error_model: The parsed error body, validated against the model
+                registered in `Endpoint.errors` for the status.
             raw: The original `httpx.Response` for further inspection.
         """
         self.status_code = status_code
         self.error_model = error_model
         self.raw = raw
         super().__init__(f"HTTP {status_code}")
+
+
+class ApiResponseErrorParse(ApiError):
+    """Raised when a response body did not parse against the declared model.
+
+    Covers both paths: a documented error status whose body didn't match the
+    model registered in `Endpoint.errors`, and a success status whose body
+    didn't match `Endpoint.response_model`. The underlying parse error is
+    chained via `__cause__` (raise the new exception with `from exc`).
+    `ApiResponseErrorParse` is *not* a subclass of `ApiResponseError`:
+    the typed model's invariant (`error_model` is non-`None`) only holds
+    in the parsed case.
+    """
+
+    def __init__(
+        self,
+        status_code: int,
+        body: bytes,
+        raw: httpx.Response,
+    ) -> None:
+        """Initialize the `ApiResponseErrorParse`.
+
+        Args:
+            status_code: The HTTP status code of the response that failed to parse.
+            body: The raw response body that failed to parse.
+            raw: The original `httpx.Response` for further inspection.
+        """
+        self.status_code = status_code
+        self.body = body
+        self.raw = raw
+        super().__init__(f"HTTP {status_code} (body did not match the declared model)")
 
 
 class UnexpectedStatus(ApiError):
@@ -64,5 +95,6 @@ __all__ = [
     "ApiError",
     "ApiTransportError",
     "ApiResponseError",
+    "ApiResponseErrorParse",
     "UnexpectedStatus",
 ]

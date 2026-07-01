@@ -6,7 +6,7 @@ import pytest
 
 from apyro import ApiClient, ApiClientConfig, ApiResponseError, UnexpectedStatus
 
-from _mocks import BASE_URL, CREATE_ITEM, GET_ITEM, GET_ITEMS, mock_handler
+from _mocks import BASE_URL, CREATE_ITEM, GET_ITEM, GET_ITEMS, ErrorBody, mock_handler
 
 
 def test_sync_get_list(client: ApiClient) -> None:
@@ -40,7 +40,7 @@ def test_sync_documented_error(client: ApiClient) -> None:
     with pytest.raises(ApiResponseError) as exc:
         client.request(GET_ITEM, path_params={"id": 404})
     assert exc.value.status_code == 404
-    assert exc.value.error_model is not None
+    assert isinstance(exc.value.error_model, ErrorBody)
 
 
 def test_sync_undocumented_error(client: ApiClient) -> None:
