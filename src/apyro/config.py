@@ -27,7 +27,7 @@ class ApiClientConfig:
         password: Password for HTTP basic auth. Pairs with `username`.
         auth_flow: Custom httpx auth callable, used when `username`/`password`
             are not set. Receives the request and returns the auth tuple.
-        suppress_unexpected_status: When `True`, undocumented 4xx/5xx
+        suppress_unexpected_status: When `True`, undocumented status error
             responses are returned as `ApiResponse` with `parsed=None`
             instead of raising `UnexpectedStatus`.
         transport: Custom httpx transport to use as the base transport

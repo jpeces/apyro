@@ -18,7 +18,7 @@ class ApiResponseError(ApiError):
     """Raised when the response has a documented error status code.
 
     Carries the parsed error model (the model registered in
-    `Endpoint.errors` for the status) and the raw httpx response.
+    `Endpoint.errors` for the status) and the raw `httpx.Response`.
     """
 
     def __init__(
@@ -44,10 +44,8 @@ class ApiResponseErrorParse(ApiError):
     Covers both paths: a documented error status whose body didn't match the
     model registered in `Endpoint.errors`, and a success status whose body
     didn't match `Endpoint.response_model`. The underlying parse error is
-    chained via `__cause__` (raise the new exception with `from exc`).
-    `ApiResponseErrorParse` is *not* a subclass of `ApiResponseError`:
-    the typed model's invariant (`error_model` is non-`None`) only holds
-    in the parsed case.
+    chained via `__cause__`. `ApiResponseErrorParse` is *not* a subclass of
+    `ApiResponseError`.
     """
 
     def __init__(
@@ -70,10 +68,10 @@ class ApiResponseErrorParse(ApiError):
 
 
 class UnexpectedStatus(ApiError):
-    """Raised when the response status is not implemented/documented.
+    """Raised when the response has an error status not declared in `Endpoint.errors`.
 
-    Only raised if ``ApiClientConfig.suppress_unexpected_status`` is ``False``;
-    otherwise the client returns an :class:`ApiResponse` with ``parsed=None``.
+    Only raised if `ApiClientConfig.suppress_unexpected_status` is `False`;
+    otherwise the client returns an `ApiResponse` with `parsed=None`.
     """
 
     def __init__(self, status_code: int, content: bytes) -> None:

@@ -12,11 +12,11 @@ T = TypeVar("T")
 
 
 class ApiClient:
-    """A resilient HTTP client built on httpx, driven by :class:`Endpoint` descriptors.
+    """An HTTP client built on httpx, driven by `Endpoint` descriptors.
 
     Owns httpx client lifecycle, config, retries, and auth. Request rendering
-    and response parsing are delegated to :meth:`Endpoint.build_request` and
-    :meth:`Endpoint.parse_response`. The underlying httpx client is constructed
+    and response parsing are delegated to `Endpoint.build_request` and
+    `Endpoint.parse_response`. The underlying httpx client is constructed
     lazily on first use and shared for the lifetime of this instance.
     """
 
@@ -88,7 +88,7 @@ class ApiClient:
         return {k: [_wrap(h) for h in v] for k, v in raw.items()}
 
     def get_client(self) -> httpx.Client:
-        """Get the underlying httpx.Client, constructing a new one if not set."""
+        """Get the underlying `httpx.Client`, constructing a new one if not set."""
         import httpx
 
         if self._client is None:
@@ -111,7 +111,7 @@ class ApiClient:
         return self._client
 
     def get_async_client(self) -> httpx.AsyncClient:
-        """Get the underlying httpx.AsyncClient, constructing a new one if not set."""
+        """Get the underlying `httpx.AsyncClient`, constructing a new one if not set."""
         import httpx
 
         if self._async_client is None:
@@ -154,11 +154,17 @@ class ApiClient:
             headers: Per-request headers; merged on top of the client defaults.
 
         Returns:
-            The parsed `ApiResponse` for the endpoint.
+            An `ApiResponse[T]` containing the parsed body.
 
         Raises:
             ApiTransportError: When the underlying httpx transport fails
                 (timeout, connection error, etc.).
+            ApiResponseError: A documented error status was returned and
+                the body parsed against the registered model.
+            ApiResponseErrorParse: The body failed to parse against the
+                declared model (success or error path).
+            UnexpectedStatus: An `Enpoint`'s undocumented status error was returned and
+                `ApiClientConfig.suppress_unexpected_status` is `False`.
         """
         import httpx
 
@@ -204,11 +210,17 @@ class ApiClient:
             headers: Per-request headers; merged on top of the client defaults.
 
         Returns:
-            The parsed `ApiResponse` for the endpoint.
+            An `ApiResponse[T]` containing the parsed body.
 
         Raises:
             ApiTransportError: When the underlying httpx transport fails
                 (timeout, connection error, etc.).
+            ApiResponseError: A documented error status was returned and
+                the body parsed against the registered model.
+            ApiResponseErrorParse: The body failed to parse against the
+                declared model (success or error path).
+            UnexpectedStatus: An `Enpoint`'s undocumented status error was returned and
+                `ApiClientConfig.suppress_unexpected_status` is `False`.
         """
         import httpx
 

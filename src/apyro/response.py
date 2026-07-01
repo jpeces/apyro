@@ -11,11 +11,11 @@ T = TypeVar("T")
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class ApiResponse(Generic[T]):
-    """A response from an endpoint.
+    """A typed wrapper around an `httpx.Response` returned by an `Endpoint`.
 
     Callers can go typed via `response.parsed` or raw via `response.raw`
-    without two different code paths. The flat `status_code`, `content`,
-    and `headers` fields are convenience mirrors of `raw`.
+    without two different code paths. The `status_code`, `content`, and
+    `headers` fields mirror `raw` for convenience.
 
     Parameters:
         status_code: The HTTP status code returned by the server.
@@ -23,7 +23,8 @@ class ApiResponse(Generic[T]):
         headers: The response headers.
         parsed: The response body parsed against the endpoint's
             `response_model` or `response_handler`, or `None` if not parsed
-            (e.g. when `suppress_unexpected_status` returned this response).
+            (e.g. when `ApiClientConfig.suppress_unexpected_status` is configured
+            as `True` ).
         raw: The original `httpx.Response` for full access.
     """
 

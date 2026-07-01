@@ -29,15 +29,35 @@ class HttpMethod(StrEnum):
 
 @dataclass
 class Endpoint(Generic[T]):
-    """Declarative, spec-agnostic description of an API operation.
+    """Declarative description of an API operation.
 
-    Generic parameter ``T`` is the parsed success type returned by
-    ``ApiResponse.parsed``. Validation of path/query/body parameters is done
+    Generic parameter `T` is the parsed success type returned by
+    `ApiResponse.parsed`. Validation of path/query/body parameters is done
     via their pydantic models when provided.
 
     An endpoint owns the full transform pipeline: rendering its path template,
     serializing query/body against its models, and parsing a response against
-    its ``response_model`` / ``response_handler`` / ``errors`` map.
+    its `response_model` / `response_handler` / `errors` map.
+
+    Parameters:
+        method: The HTTP method for this operation.
+        path: The URL path template, with `{placeholder}` segments for path
+            parameters.
+        response_model: The pydantic model to parse the success response body
+            into. Generic parameter `T` is inferred from this.
+        path_params_model: Optional pydantic model that validates path
+            parameters before rendering the URL. Defaults to `None`.
+        query_params_model: Optional pydantic model that validates query
+            parameters, dropping `None` values and applying aliases.
+            Defaults to `None`.
+        request_body_model: Optional pydantic model that validates and
+            serializes the request body. Defaults to `None`.
+        response_handler: Optional callable that overrides the default
+            `TypeAdapter`-based parsing of the success response. Defaults
+            to `None`.
+        errors: Maps documented error status codes to their pydantic models.
+            Each status in this dictionary is parsed and raised as
+            `ApiResponseError`. Defaults to an empty dict.
     """
 
     method: HttpMethod
@@ -61,8 +81,8 @@ class Endpoint(Generic[T]):
         """Render this endpoint into an `httpx.Request` via `client`.
 
         Args:
-            client: The httpx client used to build the request (provides
-                `base_url` and shared state).
+            client: The `httpx.Client` or `httpx.AsyncClient` used to build
+                the request (provides `base_url` and shared state).
             path_params: Values for `path` placeholders. Validated against
                 `path_params_model` when set.
             query_params: Query string values. Validated against
@@ -113,13 +133,24 @@ class Endpoint(Generic[T]):
     ) -> ApiResponse[T]:
         """Parse an `httpx.Response` against this endpoint's models.
 
-        Raises `ApiResponseError` when a documented error status is returned
-        and the body parses against the registered model. Raises
-        `ApiResponseErrorParse` when the body fails to parse against either
-        the registered error model (error path) or `response_model`
-        (success path). Raises `UnexpectedStatus` for undocumented 4xx/5xx
-        unless `suppress_unexpected_status` is set, in which case an
-        `ApiResponse` with `parsed=None` is returned.
+        Args:
+            raw: The `httpx.Response` to parse.
+            suppress_unexpected_status: When `True`, undocumented status error
+                responses are returned as `ApiResponse` with `parsed=None`
+                instead of raising `UnexpectedStatus`. Defaults to `False`.
+
+        Returns:
+            An `ApiResponse[T]` with the parsed body, or `parsed=None` when
+            `suppress_unexpected_status` returned a status error without a
+            registered error model.
+
+        Raises:
+            ApiResponseError: An `Endpoint`'s documented error status was returned.
+            ApiResponseErrorParse: The body failed to parse against either
+                the registered error model (error path) or `response_model`
+                (success path).
+            UnexpectedStatus: An `Endpoint`'s undocumented status error was returned.
+            This error only is raised if `suppress_unexpected_status` is `False`.
         """
         status = raw.status_code
 
